@@ -1,4 +1,4 @@
-File Krall_speciation.csv was sent to JRKrall by EPA in 11/2018
+File Krall_speciation.csv was sent to JRKrall by EPA in 11/2018.  These are the code files used to check and clean these data.
 
 1. dat-sep-year.sh: File to take Krall_speciation.csv and separate into years, e.g. Krall_speciation-2000.csv.  
 2. ussa-fulldat.R: File to take yearly speciation data (e.g. Krall_speciation-2000.csv) and format together based on information we need (columns, MDL, detection limits) and ensure dates are correct.  Also creates more concise method variable.
