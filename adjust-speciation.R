@@ -79,9 +79,26 @@ for(i in years) {
                                     "EC CSN PM2.5 LC TOT",
                                     ifelse(Parameter.Name1 %in% c("badj-adjOC", "-adjOC"),
                                            "OC CSN Unadjusted PM2.5 LC TOT", NA)))
-  # uncdertainty info (drop sample measurement)
-  unc <- select(ecoc1, Parameter.Name, State.Code, County.Code, Site.Number, POC,
-                Date.Local, Uncertainty, Method.Name)
+  
+  # Uncertainty
+  unc <- select(ecoc1, -Sample.Measurement) %>%
+    spread(., Parameter.Name, Uncertainty)
+  
+  # transform based on formulas from chapter 8
+  unc <- mutate(unc, adjEC = 1.3 * `EC CSN PM2.5 LC TOT`, 
+                 adjOC = sqrt((`OC CSN Unadjusted PM2.5 LC TOT`^2 - 0.3^2 * `EC CSN PM2.5 LC TOT`^2)) / M) %>%
+    select(., -`OC CSN Unadjusted PM2.5 LC TOT`, -`EC CSN PM2.5 LC TOT`) %>%
+    # group together EC/OC into one column
+    gather(., Parameter.Name1, Uncertainty, adjEC : adjOC) %>%
+    mutate(., Parameter.Name1 = paste0(Type, "-", Parameter.Name1)) %>%
+    select(., -A, -M, -Type, -Month)
+  # rename again
+  unc <- mutate(unc, Parameter.Name = ifelse(Parameter.Name1 %in% c("badj-adjEC", "-adjEC"),
+                                               "EC CSN PM2.5 LC TOT",
+                                               ifelse(Parameter.Name1 %in% c("badj-adjOC", "-adjOC"),
+                                                      "OC CSN Unadjusted PM2.5 LC TOT", NA)))
+  
+
   # add in corrected EC/OC
   meas1 <- full_join(meas, unc) %>%
     select(., -Parameter.Name) %>%
