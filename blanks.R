@@ -19,7 +19,7 @@ years <- seq(2000, 2017)
 #years <- seq(2000, 2002)
 k <- 1
 cons1 <- cons[-which(cons == "PM2.5 - Local Conditions")]
-cons1 <- cons1[1 : 2]
+#cons1 <- cons1[1 : 2]
 for(j in 1 : length(cons1)) {
   for(i in years) {
     print(i)
@@ -34,16 +34,23 @@ for(j in 1 : length(cons1)) {
     # What to do about MDL for blank?
     x <- dplyr::filter(x, Parameter.Name == cons1[j], 
                        Blank.Type == "FIELD", 
-                       Units.of.Measure == "Micrograms/cubic meter (LC)", Duration == "24 HOUR") %>%
-      unite(., quals, Qualifier.1 : Qualifier.10, sep = "") %>%
+                       Units.of.Measure == "Micrograms/cubic meter (LC)", Duration == "24 HOUR")
+    p1 <- (length(which(x$Sample.Measurement < x$MDL)) / nrow(x)) %>% round(., 2)
+    print(c(cons1[j], i, p1))
+    x <- unite(x, quals, Qualifier.1 : Qualifier.10, sep = "") %>%
       # No qualifying flags for any 1-10
       filter(., quals == "NANANANANANANANANA") %>%
       mutate(., State.Code = str_pad(State.Code, 2, "left", pad = "0"), 
              County.Code = str_pad(County.Code, 3, "left", pad = "0"),
              Site.Num = str_pad(Site.Num, 4, "left", pad = "0"),
              id = paste0(State.Code, County.Code, Site.Num, ".", POC)) %>%
-      dplyr::select(., Date.Local, id, Sample.Measurement, Uncertainty)
-    x <- x[complete.cases(x), ]
+      
+            # Replace below the detection limit with 1/2 MDL
+            # blank = ifelse(Sample.Measurement < MDL, 1/2 * MDL, Sample.Measurement)) %>%
+            # Increase uncertainty?
+            #Uncertainty = ifelse(Sample.Measurement < MDL, 5/6 * MDL, Uncertainty)) %>%
+      dplyr::select(., Date.Local, id, Sample.Measurement, Uncertainty) %>%
+      filter(., !is.na(Sample.Measurement))
     # 
     # x <- group_by(x, Parameter.Name) %>% 
     #   summarize(., mean = mean(Sample.Measurement, na.rm = T),
@@ -67,15 +74,3 @@ for(j in 1 : length(cons1)) {
 }
 
 #save(xall, file = "data/blanks-all.RData")
-
-ls <- list.files("data/blanks") 
-ls <- ls[grep("-blanks", ls)]
-x1 <- read.csv(file.path("data/blanks", ls[2]), 
-    colClasses = c("Date", "character", "numeric", "numeric"))
-x1 <- mutate(x1, state = substr(id, 1, 2))
-t1 <- table(x1$id) %>% sort()
-monsin <- unlist(monsin)
-t1[names(t1) %in% monsin]
-# Not enough to do by site?
-
-# check monsin
