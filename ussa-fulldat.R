@@ -58,7 +58,7 @@ cn <- colnames(x)
 
 # Remove to be dropped
 drops <- c("ParameterCode", "Latitude", "Longitude", "Datum",
-           "Time.Local", "Date.GMT", "Time.GMT", "Qualifiers", "Method.Code",
+           "Time.Local", "Date.GMT", "Time.GMT", "Method.Code",
            "State.Name", "County.Name", "Date.of.Last.Change")
 cc[drops] <- rep("NULL", length = length(drops))
 names(cc) <- NULL
@@ -145,6 +145,9 @@ for(i in years) {
   
   # Limit to only correct years
   x <- filter(x, substr(Date.Local, 1, 4) == paste(i))
+  
+  # Remove qualifiers
+  x <- filter(x, Qualifier == "")
   
   # Check number of rows
   nrow1[k] <- nrow(x)
