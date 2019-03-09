@@ -33,6 +33,10 @@ t2 <- t1[gr, ]
 t2 <- t2[which(t2 > 0)]
 t(t2)
 
+## FRM vs. FEM
+m1 <- filter(methodsall, Parameter.Name == "PM2.5 - Local Conditions")
+table(m1$Method.Type)
+
 # Methods of interest for OC/EC tot (2000-2005 approach)
 gr <- which(rownames(t1) %in% c("OC CSN Unadjusted PM2.5 LC TOT", "EC CSN PM2.5 LC TOT"))
 t2 <- t(t1[gr, ])
