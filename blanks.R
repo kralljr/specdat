@@ -11,55 +11,37 @@ load("data/cons.RData")
 
 # load each blank data
 # find parameters of interest
-# yearly correct?
-# Add 0 to number
 
-
+# all years
 years <- seq(2000, 2017)
-#years <- seq(2000, 2002)
 k <- 1
+# Do not blank correct PM2.5
 cons1 <- cons[-which(cons == "PM2.5 - Local Conditions")]
-#cons1 <- cons1[1 : 2]
+
 for(j in 1 : length(cons1)) {
   for(i in years) {
-    print(i)
+    print(c(cons1[j], i))
     # Name with year
     n1 <- paste0("data/blanks/blanks_all_", i, ".csv")
     # Load data
-    x <- read.csv(n1)
+    x <- read.csv(n1, stringsAsFactors = F)
     
+    # Restrict blank data
     # Keep only cons
-    # Don;t use Micrograms only? ********
+    # Don't use Micrograms only? ********
     # Use only 24 hour
-    # What to do about MDL for blank?
     x <- dplyr::filter(x, Parameter.Name == cons1[j], 
                        Blank.Type == "FIELD", 
                        Units.of.Measure == "Micrograms/cubic meter (LC)", Duration == "24 HOUR")
-    p1 <- (length(which(x$Sample.Measurement < x$MDL)) / nrow(x)) %>% round(., 2)
-    print(c(cons1[j], i, p1))
+
+    # Remove qualifiers, get ID
     x <- unite(x, quals, Qualifier.1 : Qualifier.10, sep = "") %>%
       # No qualifying flags for any 1-10
       filter(., quals == "NANANANANANANANANA") %>%
       mutate(., State.Code = str_pad(State.Code, 2, "left", pad = "0"), 
              County.Code = str_pad(County.Code, 3, "left", pad = "0"),
              Site.Num = str_pad(Site.Num, 4, "left", pad = "0"),
-             id = paste0(State.Code, County.Code, Site.Num, ".", POC)) %>%
-      
-            # Replace below the detection limit with 1/2 MDL
-            # blank = ifelse(Sample.Measurement < MDL, 1/2 * MDL, Sample.Measurement)) %>%
-            # Increase uncertainty?
-            #Uncertainty = ifelse(Sample.Measurement < MDL, 5/6 * MDL, Uncertainty)) %>%
-      dplyr::select(., Date.Local, id, Sample.Measurement, Uncertainty) %>%
-      filter(., !is.na(Sample.Measurement))
-    # 
-    # x <- group_by(x, Parameter.Name) %>% 
-    #   summarize(., mean = mean(Sample.Measurement, na.rm = T),
-    #          count = n(),
-    #          unc = sqrt(sum(Uncertainty^2, na.rm = T))) %>%
-    #   mutate(., unc = unc / count, Year = i) %>%
-    #   select(., -count)
-    
-    # Don't blank correct PM2.5
+             id = paste0(State.Code, County.Code, Site.Num, ".", POC))
     
     if(k == 1) {
       xall <- x
@@ -69,8 +51,28 @@ for(j in 1 : length(cons1)) {
     
     k <- k + 1
   }
+  
+  # For all years, one constituent
+  # Get median MDL by site
+  meds <- group_by(xall, id) %>% summarise(., m1 = median(MDL, na.rm = T))
+  
+  # Merge in median MDL
+  xall <- full_join(xall, meds)
+  
+  xall <- mutate(xall,
+            # replace MDL with median MDL by site
+            MDL = ifelse(is.na(MDL), m1, MDL),
+            # Replace uncertainty if BDL
+            Uncertainty = ifelse(Sample.Measurement < MDL, 5/6 * MDL, Uncertainty),
+            # Replace below the detection limit with 1/2 MDL
+            Sample.Measurement = ifelse(Sample.Measurement < MDL, 1/2 * MDL, Sample.Measurement)) %>%
+    # Restrict to variables of interest
+  dplyr::select(., Date.Local, id, Sample.Measurement, Uncertainty, MDL, Method.Name) %>%
+    # Remove missing
+  filter(., !is.na(Sample.Measurement))
+
+
+  # Save constituent file for blanks
   cn <- gsub("\\.", "", gsub(" ", "", cons1[j]))
   write.csv(xall, file = paste0("data/blanks/", cn, "-blanks.csv"), row.names = F)
 }
-
-#save(xall, file = "data/blanks-all.RData")
