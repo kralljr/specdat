@@ -14,11 +14,11 @@ load("data/cons.RData")
 
 # all years
 years <- seq(2000, 2017)
-k <- 1
 # Do not blank correct PM2.5
 cons1 <- cons[-which(cons == "PM2.5 - Local Conditions")]
 
 for(j in 1 : length(cons1)) {
+  k <- 1
   for(i in years) {
     print(c(cons1[j], i))
     # Name with year
@@ -54,20 +54,20 @@ for(j in 1 : length(cons1)) {
   
   # For all years, one constituent
   # Get median MDL by site
-  meds <- group_by(xall, id) %>% summarise(., m1 = median(MDL, na.rm = T))
+  # meds <- group_by(xall, id) %>% summarise(., m1 = median(MDL, na.rm = T))
+  # 
+  # # Merge in median MDL
+  # xall <- full_join(xall, meds)
   
-  # Merge in median MDL
-  xall <- full_join(xall, meds)
-  
-  xall <- mutate(xall,
-            # replace MDL with median MDL by site
-            MDL = ifelse(is.na(MDL), m1, MDL),
-            # Replace uncertainty if BDL
-            Uncertainty = ifelse(Sample.Measurement < MDL, 5/6 * MDL, Uncertainty),
-            # Replace below the detection limit with 1/2 MDL
-            Sample.Measurement = ifelse(Sample.Measurement < MDL, 1/2 * MDL, Sample.Measurement)) %>%
+  # xall <- mutate(xall,
+  #           # replace MDL with median MDL by site
+  #           MDL = ifelse(is.na(MDL), m1, MDL),
+  #           # Replace uncertainty if BDL
+  #           Uncertainty = ifelse(Sample.Measurement < MDL, 5/6 * MDL, Uncertainty),
+  #           # Replace below the detection limit with 1/2 MDL
+  #           Sample.Measurement = ifelse(Sample.Measurement < MDL, 1/2 * MDL, Sample.Measurement)) %>%
     # Restrict to variables of interest
-  dplyr::select(., Date.Local, id, Sample.Measurement, Uncertainty, MDL, Method.Name) %>%
+  xall <- dplyr::select(xall, Date.Local, id, Sample.Measurement, Uncertainty, MDL, Method.Name, Parameter.Name) %>%
     # Remove missing
   filter(., !is.na(Sample.Measurement))
 
