@@ -58,7 +58,7 @@ cn <- colnames(x)
 
 # Remove to be dropped
 drops <- c("ParameterCode", "Latitude", "Longitude", "Datum",
-           "Time.Local", "Date.GMT", "Time.GMT", "Method.Code",
+           "Date.GMT", "Time.GMT", "Method.Code",
            "State.Name", "County.Name", "Date.of.Last.Change")
 cc[drops] <- rep("NULL", length = length(drops))
 names(cc) <- NULL
@@ -146,12 +146,13 @@ for(i in years) {
   # Limit to only correct years
   x <- filter(x, substr(Date.Local, 1, 4) == paste(i))
   
-  # Remove qualifiers
-  x <- filter(x, Qualifier == "")
-  
   # Check number of rows
   nrow1[k] <- nrow(x)
   
+  # Remove qualifiers
+  x <- filter(x, Qualifiers == "", Time.Local == "00:00")
+  
+
   n2 <- paste0("data/Krall_speciation-", i, "-chdate.csv")
   write.csv(x, file = n2, row.names = F)
   
@@ -210,7 +211,7 @@ for(i in years) {
   
   
   # fix data
-  x <- dplyr::select(x, -Method.Type, -Unit.of.Measure)
+  x <- dplyr::select(x, -Method.Type, -Unit.of.Measure, -Qualifiers, -Time.Local)
   write.csv(x, file = n1, row.names = F)
   
   
