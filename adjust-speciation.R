@@ -14,7 +14,8 @@ load("data/mons.RData")
 # fix cons of interest (removing TOR not measured for this time/site)
 cons <- cons[c(1 : 22, 33 : 35, 37 : 38)]
 
-
+#** Should not be any missing for NH4, SO4, NO3, OC, EC **
+bigs <- cons[c(22 : 24, 26, 27)]
 
 ###########################
 # RESTRICT TO YEARS/MONITORS of interest
@@ -143,9 +144,8 @@ blankbdl <- function(consU, bdl = F) {
     ################
     # Missing metals, replace with geometric mean, unc = 4 * geomean
     # ** Should not be any missing for NH4, SO4, NO3, OC, EC **
-    x <- mutate(x, Uncertainty = ifelse(is.na(Sample.Measurement), 4 * geomean,
-                                        Uncertainty),
-                Sample.Measurement = ifelse(is.na(Sample.Measurement), geomean,
+    x <- mutate(x, Uncertainty = ifelse(is.na(Sample.Measurement), 4 * geomean, Uncertainty),
+                Sample.Measurement = ifelse(is.na(Sample.Measurement) & Parameter.Name %in% bigs, geomean,
                                             Sample.Measurement))
     
     
