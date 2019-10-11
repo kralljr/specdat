@@ -48,13 +48,19 @@
                   Site.Number = fipspad(Site.Number, 4))
       
       # restrict to parameter of interest, columns of interest
-      x <- mutate(x, id = paste0(State.Code, County.Code, Site.Number, ".", POC))
-      x <- filter(x, Parameter.Name == cons[j], id %in% mons$id)
+      # x <- mutate(x, id = paste0(State.Code, County.Code, Site.Number, ".", POC))
+      # x <- filter(x, Parameter.Name == cons[j], id %in% mons$id)
+      
+      # no POC
+      x <- mutate(x, id = paste0(State.Code, County.Code, Site.Number))
+      x <- filter(x, Parameter.Name == cons[j], id %in% mons$id2)
       
       if(k == 1) {
         xall <- x
+        k <- k + 1
       } else {
         xall <- full_join(x, xall)
+        
       }
     } # end loop over years
     
@@ -94,6 +100,11 @@
     
     write.csv(xall, file = n1, row.names = F)
   }
+  
+  
+  
+  
+  
   
   
   
