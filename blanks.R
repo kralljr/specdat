@@ -9,11 +9,13 @@ library(lubridate)
 # Load constituents
 load("data/cons.RData")
 
+nab <- function(x) is.na(x) | x == ""
+
 # load each blank data
 # find parameters of interest
 
 # all years
-years <- seq(2000, 2017)
+years <- seq(2000, 2019)
 # Do not blank correct PM2.5
 cons1 <- cons[-which(cons == "PM2.5 - Local Conditions")]
 
@@ -35,13 +37,21 @@ for(j in 1 : length(cons1)) {
                        Units.of.Measure == "Micrograms/cubic meter (LC)", Duration == "24 HOUR")
 
     # Remove qualifiers, get ID
-    x <- unite(x, quals, Qualifier.1 : Qualifier.10, sep = "") %>%
+    # fix: doesn't work for later years
+    #unite(x, quals, Qualifier.1 : Qualifier.10, sep = "") %>%
+    #filter(x, quals == "NANANANANANANANANA") %>%
       # No qualifying flags for any 1-10
-      filter(., quals == "NANANANANANANANANA") %>%
+    x <-  filter(x, nab(Qualifier.1), nab(Qualifier.2),
+                 nab(Qualifier.3),nab(Qualifier.4),
+                 nab(Qualifier.5),nab(Qualifier.6),
+                 nab(Qualifier.7),nab(Qualifier.8),
+                 nab(Qualifier.9),nab(Qualifier.10)) %>%
+      # remove qualifiers
+      select(., -contains("Qualifier")) %>%
       mutate(., State.Code = str_pad(State.Code, 2, "left", pad = "0"), 
              County.Code = str_pad(County.Code, 3, "left", pad = "0"),
              Site.Num = str_pad(Site.Num, 4, "left", pad = "0"),
-             id = paste0(State.Code, County.Code, Site.Num, ".", POC))
+             id = paste0(State.Code, County.Code, Site.Num, ".", POC)) 
     
     if(k == 1) {
       xall <- x
