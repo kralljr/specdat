@@ -77,13 +77,12 @@ cons <- c("PM2.5 - Local Conditions", "Arsenic PM2.5 LC", "Aluminum PM2.5 LC" ,
           "OC PM2.5 LC TOR",  "EC PM2.5 LC TOR",   "OC1 PM2.5 LC",  "OC2 PM2.5 LC",  "OC3 PM2.5 LC",                          
            "OC4 PM2.5 LC",   "OP PM2.5 LC TOR",   "EC1 PM2.5 LC",   "EC2 PM2.5 LC",  "EC3 PM2.5 LC",                          
           "Sulfate PM2.5 LC" , "Ammonium Ion PM2.5 LC"  ,"Sodium Ion Pm2.5 LC",
-          "OCX Carbon PM2.5 LC",  "OC CSN Unadjusted PM2.5 LC TOT",  "EC CSN PM2.5 LC TOT")
+          "OCX Carbon PM2.5 LC",  "OC CSN Unadjusted PM2.5 LC TOT",  "EC CSN PM2.5 LC TOT",
+          "Barium PM2.5 LC", "Sodium PM2.5 LC", "Sulfur PM2.5 LC")
         
 save(cons, file = "data/cons.RData")
-# List of parameters to drop:  42
-# "Sodium PM2.5 LC" ,
+# List of parameters to drop:  42 - 3(sodium, barium, sulfur)
 # "Rubidium PM2.5 LC", 
-# "Sulfur PM2.5 LC"                     
 # "Zirconium PM2.5 LC"                    
 # [34] "Chloride PM2.5 LC"  
 # [1] "Sample Flow Rate- CV"                  
@@ -96,7 +95,6 @@ save(cons, file = "data/cons.RData")
 # [8] "Average Ambient Pressure"    
 # "Acceptable PM2.5 AQI & Speciation Mass"
 # [48] "Antimony PM2.5 LC"                     
-# [49] "Barium PM2.5 LC"                       
 # [50] "Cadmium PM2.5 LC"                      
 # [51] "Cobalt PM2.5 LC"                       
 # [52] "Cerium PM2.5 LC"                       
@@ -131,7 +129,8 @@ save(cons, file = "data/cons.RData")
 # Fix year datasets (dates within year)
 ###########################
 
-years <- seq(2000, 2017)
+years <- seq(2000, 2019)
+#years <- c(2018, 2019)
 nrow1 <- vector()
 k <- 1
 for(i in years) {
@@ -139,7 +138,11 @@ for(i in years) {
   # Name with year
   n1 <- paste0("data/Krall_speciation-", i, ".csv")
   # Load data
-  x <- fread(file = n1, sep=",", colClasses = cc)
+  if(i <= 2017) {
+    x <- fread(file = n1, sep=",", colClasses = cc)
+  } else {
+    x <- fread(file = n1, sep=",", colClasses = cc[cc!= "NULL"])
+  }
   # Apply appropriate header
   colnames(x) <- header1
   
@@ -150,7 +153,11 @@ for(i in years) {
   nrow1[k] <- nrow(x)
   
   # Remove qualifiers
-  x <- filter(x, Qualifiers == "", Time.Local == "00:00")
+  # Qualifier = 2– Data does not meet a particular criteria,
+  #but has been determined to be valid
+  # MDL is from 2018-2019
+  x <- filter(x, Qualifiers == "" | Qualifiers == 2 |
+                is.na(Qualifiers) | Qualifiers == "MD - Value less than MDL.", Time.Local == "00:00")
   
 
   n2 <- paste0("data/Krall_speciation-", i, "-chdate.csv")
@@ -159,7 +166,7 @@ for(i in years) {
   k <- k + 1
 }
 # Check rows are equal
-all.equal(sum(nrow1), rows)
+all.equal(sum(nrow1[1 : 18]), rows)
 
 
 
@@ -171,7 +178,7 @@ all.equal(sum(nrow1), rows)
 ###########################
 # Create methods dataset, fix yearly data (which columns)
 # years of data
-years <- seq(2000, 2017)
+years <- seq(2000, 2019)
 dates <- matrix(nrow = length(years), ncol = 2)
 k <- 1
 for(i in years) {
