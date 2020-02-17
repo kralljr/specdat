@@ -157,7 +157,8 @@ for(i in years) {
   #but has been determined to be valid
   # MDL is from 2018-2019
   x <- filter(x, Qualifiers == "" | Qualifiers == 2 |
-                is.na(Qualifiers) | Qualifiers == "MD - Value less than MDL.", Time.Local == "00:00")
+                is.na(Qualifiers) | Qualifiers == "MD - Value less than MDL.", 
+              Qualifiers == "MD", Time.Local == "00:00")
   
 
   n2 <- paste0("data/Krall_speciation-", i, "-chdate.csv")
@@ -166,7 +167,7 @@ for(i in years) {
   k <- k + 1
 }
 # Check rows are equal
-all.equal(sum(nrow1[1 : 18]), rows)
+#all.equal(sum(nrow1[1 : 18]), rows)
 
 
 
@@ -179,6 +180,7 @@ all.equal(sum(nrow1[1 : 18]), rows)
 # Create methods dataset, fix yearly data (which columns)
 # years of data
 years <- seq(2000, 2019)
+#years <- c(2018, 2019)
 dates <- matrix(nrow = length(years), ncol = 2)
 k <- 1
 for(i in years) {
